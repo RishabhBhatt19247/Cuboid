@@ -10,7 +10,7 @@ from rest_framework import permissions
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated,IsAdminUser
 from .Validation import check_validity
-
+from rest_framework import serializers
 '''
 Create new Box api
 '''
@@ -21,11 +21,11 @@ def create_box(request):
     box = Box(created_by=request.user)
     data = JSONParser().parse(request)
     serializer = AdminBoxSerializer(box, data=data,partial=True)
-    if serializer.is_valid() and check_validity(request.user):
-        serializer.save()
-        return Response(serializer.data,status=status.HTTP_201_CREATED)
+    if serializers.is_valid() and check_validity(request.user):
+        serializers.save()
+        return Response(serializers.data,status=status.HTTP_201_CREATED)
 
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
 '''
 List All box api
@@ -34,9 +34,11 @@ List All box api
 @authentication_classes([TokenAuthentication])
 def list_box(request):
     box_queryset = Box.objects.all()
+    # print(box_queryset)
     boxes = BoxFilter(request.GET,queryset=box_queryset).qs
-    serializer = BoxSerializer(boxes, many=True)
+    serializer = BoxSerializer(boxes, many=True) 
     return Response(serializer.data,status=status.HTTP_200_OK)
+    
 
 
 '''
@@ -82,13 +84,13 @@ Delete box with given id
 def delete_box(request,pk):
     try:
         box = Box.objects.get(pk=pk)
-        if request.user == box.created_by :
+        if request.user == box.created_by:
             box.delete()
         else:
             data = dict()
             data['reason'] = "You must be creator of the Box."
             return Response(data, status=status.HTTP_403_FORBIDDEN)
-        return Response(serializer.errors, status=status.HTTP_200_OK)
+        return Response(serializers.errors, status=status.HTTP_200_OK)
 
     except Box.DoesNotExist:
         data = dict()
